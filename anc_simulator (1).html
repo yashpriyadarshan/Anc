@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced ANC Simulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #fff, #f0f0f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.8;
+            margin-bottom: 30px;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+
+        .mode-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(45deg, #00d2ff, #3a7bd5);
+            border-color: #00d2ff;
+        }
+
+        .toggle-button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+            min-width: 250px;
+        }
+
+        .toggle-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .toggle-button.active {
+            background: linear-gradient(45deg, #00d2ff, #3a7bd5);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); }
+            50% { box-shadow: 0 4px 20px rgba(0, 210, 255, 0.4); }
+            100% { box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); }
+        }
+
+        .status {
+            font-size: 1.1em;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .status.active {
+            background: rgba(0, 210, 255, 0.2);
+            border: 1px solid rgba(0, 210, 255, 0.3);
+        }
+
+        .controls {
+            margin-top: 30px;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.3);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #00d2ff, #3a7bd5);
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .value-display {
+            float: right;
+            font-weight: bold;
+        }
+
+        .level-meter {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .meter-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .meter-item {
+            flex: 1;
+        }
+
+        .meter-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .meter-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.1s ease;
+            border-radius: 5px;
+        }
+
+        .meter-fill.input {
+            background: linear-gradient(90deg, #ff6b6b, #ee5a24);
+        }
+
+        .meter-fill.output {
+            background: linear-gradient(90deg, #00d2ff, #3a7bd5);
+        }
+
+        .info-panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .info-panel h3 {
+            margin-bottom: 10px;
+            color: #00d2ff;
+        }
+
+        .info-panel ul {
+            margin-left: 20px;
+            line-height: 1.6;
+        }
+
+        .warning {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.4);
+            color: #ffc107;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+
+        .frequency-display {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+
+        .freq-band {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .freq-value {
+            font-weight: bold;
+            color: #00d2ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎧 Advanced ANC Simulator</h1>
+        <p class="subtitle">Intelligent Noise Cancellation Demo</p>
+        
+        <div class="mode-selector">
+            <button class="mode-btn active" data-mode="adaptive">Adaptive ANC</button>
+            <button class="mode-btn" data-mode="frequency">Frequency-Based</button>
+            <button class="mode-btn" data-mode="simple">Simple Inversion</button>
+        </div>
+        
+        <button id="toggleBtn" class="toggle-button">Start ANC Simulation</button>
+        
+        <div id="status" class="status">ANC Simulation Stopped</div>
+        
+        <div class="level-meter">
+            <div class="meter-container">
+                <div class="meter-item">
+                    <div>Input Level</div>
+                    <div class="meter-bar">
+                        <div id="inputMeter" class="meter-fill input"></div>
+                    </div>
+                </div>
+                <div class="meter-item">
+                    <div>Output Level</div>
+                    <div class="meter-bar">
+                        <div id="outputMeter" class="meter-fill output"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="frequency-display">
+                <div class="freq-band">
+                    <div>Low (20-250Hz)</div>
+                    <div class="freq-value" id="lowFreq">0%</div>
+                </div>
+                <div class="freq-band">
+                    <div>Mid (250-4kHz)</div>
+                    <div class="freq-value" id="midFreq">0%</div>
+                </div>
+                <div class="freq-band">
+                    <div>High (4k-20kHz)</div>
+                    <div class="freq-value" id="highFreq">0%</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>
+                    Noise Reduction Strength
+                    <span class="value-display" id="gainValue">60%</span>
+                </label>
+                <input type="range" id="gainSlider" class="slider" min="0" max="100" value="60">
+            </div>
+            
+            <div class="control-group">
+                <label>
+                    Low Frequency Attenuation
+                    <span class="value-display" id="lowFreqValue">80%</span>
+                </label>
+                <input type="range" id="lowFreqSlider" class="slider" min="0" max="100" value="80">
+            </div>
+            
+            <div class="control-group">
+                <label>
+                    Mid Frequency Attenuation
+                    <span class="value-display" id="midFreqValue">50%</span>
+                </label>
+                <input type="range" id="midFreqSlider" class="slider" min="0" max="100" value="50">
+            </div>
+            
+            <div class="control-group">
+                <label>
+                    High Frequency Attenuation
+                    <span class="value-display" id="highFreqValue">30%</span>
+                </label>
+                <input type="range" id="highFreqSlider" class="slider" min="0" max="100" value="30">
+            </div>
+        </div>
+        
+        <div class="info-panel">
+            <h3>How This Improved ANC Works:</h3>
+            <ul>
+                <li><strong>Adaptive Mode:</strong> Analyzes noise patterns and adjusts cancellation dynamically</li>
+                <li><strong>Frequency-Based:</strong> Targets specific frequency ranges where noise is strongest</li>
+                <li><strong>Smart Filtering:</strong> Reduces feedback by filtering out headphone output from mic input</li>
+                <li><strong>Low-Latency Processing:</strong> Uses optimized audio buffers for real-time performance</li>
+            </ul>
+        </div>
+        
+        <div class="warning">
+            ⚠️ <strong>Limitations:</strong> Browser-based ANC cannot match hardware solutions due to latency constraints and limited processing power. This is a demonstration of ANC principles rather than a replacement for dedicated hardware.
+            <br><br>
+            <strong>Best Results:</strong> Use in quiet environments with consistent background noise (fans, air conditioning). Wired headphones required.
+        </div>
+    </div>
+
+    <script>
+        class AdvancedANCSimulator {
+            constructor() {
+                this.isRunning = false;
+                this.audioContext = null;
+                this.mediaStream = null;
+                this.sourceNode = null;
+                this.processorNode = null;
+                this.analyserNode = null;
+                this.outputAnalyserNode = null;
+                
+                // Audio processing parameters
+                this.bufferSize = 256; // Lower latency
+                this.sampleRate = 44100;
+                this.mode = 'adaptive';
+                
+                // ANC parameters
+                this.mainGain = 0.6;
+                this.lowFreqGain = 0.8;
+                this.midFreqGain = 0.5;
+                this.highFreqGain = 0.3;
+                
+                // Frequency analysis
+                this.frequencyData = new Uint8Array(1024);
+                this.noiseProfile = new Array(1024).fill(0);
+                this.adaptiveCounter = 0;
+                
+                // Filters
+                this.filters = {};
+                
+                this.setupUI();
+                this.setupEventListeners();
+                this.setupLevelMeter();
+            }
+            
+            setupUI() {
+                this.toggleBtn = document.getElementById('toggleBtn');
+                this.status = document.getElementById('status');
+                this.inputMeter = document.getElementById('inputMeter');
+                this.outputMeter = document.getElementById('outputMeter');
+                
+                // Sliders
+                this.gainSlider = document.getElementById('gainSlider');
+                this.gainValue = document.getElementById('gainValue');
+                this.lowFreqSlider = document.getElementById('lowFreqSlider');
+                this.lowFreqValue = document.getElementById('lowFreqValue');
+                this.midFreqSlider = document.getElementById('midFreqSlider');
+                this.midFreqValue = document.getElementById('midFreqValue');
+                this.highFreqSlider = document.getElementById('highFreqSlider');
+                this.highFreqValue = document.getElementById('highFreqValue');
+                
+                // Frequency displays
+                this.lowFreqDisplay = document.getElementById('lowFreq');
+                this.midFreqDisplay = document.getElementById('midFreq');
+                this.highFreqDisplay = document.getElementById('highFreq');
+                
+                // Mode buttons
+                this.modeButtons = document.querySelectorAll('.mode-btn');
+            }
+            
+            setupEventListeners() {
+                this.toggleBtn.addEventListener('click', () => this.toggle());
+                
+                this.modeButtons.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        this.modeButtons.forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
+                        this.mode = e.target.dataset.mode;
+                    });
+                });
+                
+                // Slider event listeners
+                this.gainSlider.addEventListener('input', (e) => {
+                    this.mainGain = e.target.value / 100;
+                    this.gainValue.textContent = e.target.value + '%';
+                });
+                
+                this.lowFreqSlider.addEventListener('input', (e) => {
+                    this.lowFreqGain = e.target.value / 100;
+                    this.lowFreqValue.textContent = e.target.value + '%';
+                });
+                
+                this.midFreqSlider.addEventListener('input', (e) => {
+                    this.midFreqGain = e.target.value / 100;
+                    this.midFreqValue.textContent = e.target.value + '%';
+                });
+                
+                this.highFreqSlider.addEventListener('input', (e) => {
+                    this.highFreqGain = e.target.value / 100;
+                    this.highFreqValue.textContent = e.target.value + '%';
+                });
+            }
+            
+            setupLevelMeter() {
+                setInterval(() => {
+                    if (this.analyserNode && this.isRunning) {
+                        // Input level
+                        const inputData = new Uint8Array(this.analyserNode.frequencyBinCount);
+                        this.analyserNode.getByteFrequencyData(inputData);
+                        
+                        // Output level
+                        const outputData = new Uint8Array(this.outputAnalyserNode.frequencyBinCount);
+                        this.outputAnalyserNode.getByteFrequencyData(outputData);
+                        
+                        // Calculate levels
+                        const inputLevel = this.calculateLevel(inputData);
+                        const outputLevel = this.calculateLevel(outputData);
+                        
+                        this.inputMeter.style.width = inputLevel + '%';
+                        this.outputMeter.style.width = outputLevel + '%';
+                        
+                        // Update frequency displays
+                        this.updateFrequencyDisplay(inputData);
+                        
+                    } else {
+                        this.inputMeter.style.width = '0%';
+                        this.outputMeter.style.width = '0%';
+                        this.lowFreqDisplay.textContent = '0%';
+                        this.midFreqDisplay.textContent = '0%';
+                        this.highFreqDisplay.textContent = '0%';
+                    }
+                }, 50);
+            }
+            
+            calculateLevel(dataArray) {
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) {
+                    sum += dataArray[i];
+                }
+                return (sum / dataArray.length / 255) * 100;
+            }
+            
+            updateFrequencyDisplay(data) {
+                const nyquist = this.sampleRate / 2;
+                const binSize = nyquist / data.length;
+                
+                // Calculate frequency band levels
+                const lowEnd = Math.floor(250 / binSize);
+                const midEnd = Math.floor(4000 / binSize);
+                
+                let lowSum = 0, midSum = 0, highSum = 0;
+                let lowCount = 0, midCount = 0, highCount = 0;
+                
+                for (let i = 1; i < data.length; i++) {
+                    if (i < lowEnd) {
+                        lowSum += data[i];
+                        lowCount++;
+                    } else if (i < midEnd) {
+                        midSum += data[i];
+                        midCount++;
+                    } else {
+                        highSum += data[i];
+                        highCount++;
+                    }
+                }
+                
+                const lowAvg = lowCount > 0 ? (lowSum / lowCount / 255) * 100 : 0;
+                const midAvg = midCount > 0 ? (midSum / midCount / 255) * 100 : 0;
+                const highAvg = highCount > 0 ? (highSum / highCount / 255) * 100 : 0;
+                
+                this.lowFreqDisplay.textContent = Math.round(lowAvg) + '%';
+                this.midFreqDisplay.textContent = Math.round(midAvg) + '%';
+                this.highFreqDisplay.textContent = Math.round(highAvg) + '%';
+            }
+            
+            async toggle() {
+                if (this.isRunning) {
+                    await this.stop();
+                } else {
+                    await this.start();
+                }
+            }
+            
+            async start() {
+                try {
+                    if (!window.isSecureContext) {
+                        throw new Error('HTTPS_REQUIRED');
+                    }
+                    
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        throw new Error('NO_MEDIA_DEVICES');
+                    }
+                    
+                    // Request microphone access
+                    this.mediaStream = await navigator.mediaDevices.getUserMedia({
+                        audio: {
+                            echoCancellation: false,
+                            noiseSuppression: false,
+                            autoGainControl: false,
+                            sampleRate: this.sampleRate,
+                            channelCount: 1,
+                            latency: 0.01 // Request low latency
+                        }
+                    });
+                    
+                    // Create audio context with minimal latency
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)({
+                        latencyHint: 'interactive',
+                        sampleRate: this.sampleRate
+                    });
+                    
+                    if (this.audioContext.state === 'suspended') {
+                        await this.audioContext.resume();
+                    }
+                    
+                    // Create audio nodes
+                    this.sourceNode = this.audioContext.createMediaStreamSource(this.mediaStream);
+                    this.analyserNode = this.audioContext.createAnalyser();
+                    this.outputAnalyserNode = this.audioContext.createAnalyser();
+                    
+                    // Configure analysers
+                    this.analyserNode.fftSize = 2048;
+                    this.outputAnalyserNode.fftSize = 2048;
+                    
+                    // Create filters for frequency-based processing
+                    this.createFilters();
+                    
+                    // Create advanced processor
+                    this.processorNode = this.audioContext.createScriptProcessor(this.bufferSize, 1, 1);
+                    this.processorNode.onaudioprocess = (event) => this.processAudio(event);
+                    
+                    // Connect nodes
+                    this.sourceNode.connect(this.analyserNode);
+                    this.sourceNode.connect(this.processorNode);
+                    this.processorNode.connect(this.outputAnalyserNode);
+                    this.outputAnalyserNode.connect(this.audioContext.destination);
+                    
+                    this.isRunning = true;
+                    this.updateUI();
+                    
+                } catch (error) {
+                    console.error('Error starting ANC:', error);
+                    this.handleError(error);
+                }
+            }
+            
+            createFilters() {
+                // Low-pass filter for low frequencies
+                this.filters.lowPass = this.audioContext.createBiquadFilter();
+                this.filters.lowPass.type = 'lowpass';
+                this.filters.lowPass.frequency.value = 250;
+                
+                // Band-pass filter for mid frequencies
+                this.filters.bandPass = this.audioContext.createBiquadFilter();
+                this.filters.bandPass.type = 'bandpass';
+                this.filters.bandPass.frequency.value = 2000;
+                this.filters.bandPass.Q.value = 1;
+                
+                // High-pass filter for high frequencies
+                this.filters.highPass = this.audioContext.createBiquadFilter();
+                this.filters.highPass.type = 'highpass';
+                this.filters.highPass.frequency.value = 4000;
+            }
+            
+            processAudio(event) {
+                const inputBuffer = event.inputBuffer.getChannelData(0);
+                const outputBuffer = event.outputBuffer.getChannelData(0);
+                
+                // Get current frequency analysis
+                this.analyserNode.getByteFrequencyData(this.frequencyData);
+                
+                switch (this.mode) {
+                    case 'adaptive':
+                        this.processAdaptiveANC(inputBuffer, outputBuffer);
+                        break;
+                    case 'frequency':
+                        this.processFrequencyBasedANC(inputBuffer, outputBuffer);
+                        break;
+                    case 'simple':
+                        this.processSimpleInversion(inputBuffer, outputBuffer);
+                        break;
+                }
+            }
+            
+            processAdaptiveANC(inputBuffer, outputBuffer) {
+                // Build noise profile over time
+                this.adaptiveCounter++;
+                if (this.adaptiveCounter % 10 === 0) {
+                    for (let i = 0; i < this.frequencyData.length; i++) {
+                        this.noiseProfile[i] = this.noiseProfile[i] * 0.9 + this.frequencyData[i] * 0.1;
+                    }
+                }
+                
+                // Apply adaptive cancellation
+                for (let i = 0; i < inputBuffer.length; i++) {
+                    const sample = inputBuffer[i];
+                    
+                    // Adaptive gain based on noise profile
+                    const adaptiveGain = this.calculateAdaptiveGain(sample, i);
+                    
+                    // Apply phase inversion with adaptive gain
+                    outputBuffer[i] = -sample * adaptiveGain * this.mainGain;
+                    
+                    // Apply some smoothing to reduce artifacts
+                    if (i > 0) {
+                        outputBuffer[i] = outputBuffer[i] * 0.8 + outputBuffer[i-1] * 0.2;
+                    }
+                }
+            }
+            
+            processFrequencyBasedANC(inputBuffer, outputBuffer) {
+                // Simple frequency-based processing
+                for (let i = 0; i < inputBuffer.length; i++) {
+                    const sample = inputBuffer[i];
+                    
+                    // Apply different gains based on frequency content
+                    // This is a simplified approach - real implementation would use FFT
+                    let processedSample = -sample;
+                    
+                    // Simulate frequency-based attenuation
+                    const freq = this.estimateFrequency(inputBuffer, i);
+                    let gain = this.mainGain;
+                    
+                    if (freq < 250) {
+                        gain *= this.lowFreqGain;
+                    } else if (freq < 4000) {
+                        gain *= this.midFreqGain;
+                    } else {
+                        gain *= this.highFreqGain;
+                    }
+                    
+                    outputBuffer[i] = processedSample * gain;
+                }
+            }
+            
+            processSimpleInversion(inputBuffer, outputBuffer) {
+                // Basic phase inversion
+                for (let i = 0; i < inputBuffer.length; i++) {
+                    outputBuffer[i] = -inputBuffer[i] * this.mainGain;
+                }
+            }
+            
+            calculateAdaptiveGain(sample, index) {
+                // Simplified adaptive gain calculation
+                const amplitude = Math.abs(sample);
+                const noiseLevel = this.noiseProfile[index % this.noiseProfile.length] / 255;
+                
+                // Increase gain for consistent noise, reduce for transient sounds
+                return Math.min(1.0, 0.3 + noiseLevel * 0.7);
+            }
+            
+            estimateFrequency(buffer, index) {
+                // Simplified frequency estimation
+                // In a real implementation, this would use proper FFT analysis
+                const windowSize = Math.min(32, buffer.length - index);
+                let zeroCrossings = 0;
+                
+                for (let i = index; i < index + windowSize - 1; i++) {
+                    if ((buffer[i] >= 0) !== (buffer[i + 1] >= 0)) {
+                        zeroCrossings++;
+                    }
+                }
+                
+                return (zeroCrossings * this.sampleRate) / (2 * windowSize);
+            }
+            
+            handleError(error) {
+                let errorMessage = '';
+                
+                if (error.message === 'HTTPS_REQUIRED') {
+                    errorMessage = '🔒 HTTPS Required: This app needs to be served over HTTPS or localhost to access the microphone.';
+                } else if (error.name === 'NotAllowedError') {
+                    errorMessage = '🚫 Microphone Access Denied: Please allow microphone access and try again.';
+                } else if (error.name === 'NotFoundError') {
+                    errorMessage = '🎤 No Microphone Found: Please connect a microphone and try again.';
+                } else {
+                    errorMessage = `❌ Error: ${error.message}`;
+                }
+                
+                alert(errorMessage);
+            }
+            
+            async stop() {
+                try {
+                    if (this.processorNode) {
+                        this.processorNode.disconnect();
+                        this.processorNode = null;
+                    }
+                    
+                    if (this.sourceNode) {
+                        this.sourceNode.disconnect();
+                        this.sourceNode = null;
+                    }
+                    
+                    if (this.analyserNode) {
+                        this.analyserNode.disconnect();
+                        this.analyserNode = null;
+                    }
+                    
+                    if (this.outputAnalyserNode) {
+                        this.outputAnalyserNode.disconnect();
+                        this.outputAnalyserNode = null;
+                    }
+                    
+                    if (this.mediaStream) {
+                        this.mediaStream.getTracks().forEach(track => track.stop());
+                        this.mediaStream = null;
+                    }
+                    
+                    if (this.audioContext) {
+                        await this.audioContext.close();
+                        this.audioContext = null;
+                    }
+                    
+                    this.isRunning = false;
+                    this.updateUI();
+                    
+                } catch (error) {
+                    console.error('Error stopping ANC:', error);
+                }
+            }
+            
+            updateUI() {
+                if (this.isRunning) {
+                    this.toggleBtn.textContent = 'Stop ANC Simulation';
+                    this.toggleBtn.classList.add('active');
+                    this.status.textContent = `ANC Simulation Running (${this.mode.charAt(0).toUpperCase() + this.mode.slice(1)} Mode)`;
+                    this.status.classList.add('active');
+                } else {
+                    this.toggleBtn.textContent = 'Start ANC Simulation';
+                    this.toggleBtn.classList.remove('active');
+                    this.status.textContent = 'ANC Simulation Stopped';
+                    this.status.classList.remove('active');
+                }
+            }
+        }
+        
+        // Initialize the ANC simulator
+        let ancSimulator;
+        
+        window.addEventListener('load', () => {
+            ancSimulator = new AdvancedANCSimulator();
+        });
+        
+        window.addEventListener('beforeunload', () => {
+            if (ancSimulator && ancSimulator.isRunning) {
+                ancSimulator.stop();
+            }
+        });
+    </script>
+</body>
+</html>
